@@ -1,33 +1,88 @@
-import React, { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
-import { pull, compact } from "lodash";
-import { weatherServices } from "./services"
 
 function App() {
-  const apikey = process.env.REACT_APP_WEATHER_API_KEY
-  const cityName = 'Charlotte';
+  const apikey = process.env.REACT_APP_WEATHER_API_KEY
+  const openWeatherURL = "https://api.openweathermap.org/data/2.5/"
+  const [query, setQuery] = useState('');
+  const [weather, setWeather] = useState<weatherObject>({main: {temp: 88}, name: "New York", sys: {country: "US"}, weather: [{main: "sunny"}]});
 
-  const url = `https://api.openweathermap.org/data/2.5/weather?q=${cityName}&appid=${apikey}&units=${"imperial"}`;
+  interface weatherObject {
+    main: {
+      temp: number;
+    }
+    name: string;
+    sys: {
+      country: string
+    }
+    weather: [{
+      main: string
+    }]
+  }
+  
 
-  const getWeatherData = async () => {
-    const result = await fetch(url);
+  const search = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+    fetch(`${openWeatherURL}weather?q=${query}&units=imperial&appid=${apikey}`)
+    .then(res => res.json())
+    .then(result => {
+      setWeather(result);
+      setQuery('');
+      console.log(result)
+      });
+    }
+  }
 
-    const data = await result.json()
-    return result;
-  } 
+  const onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setQuery(event.target.value)
+  }
 
-  useEffect(() => {
-    getWeatherData().then(data => console.log(data)).catch((error) => {
-      console.log("Error Getting Weather " + error.message)
-    });
-  }, []);
+  const dateBuilder = (d: Date) => {
+    let months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+    let days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-  return (
-    <div className="App">
-     <h2>This is a test</h2>
-    </div>
-  );
+    let day = days[d.getDay()];
+    let date = d.getDate()
+    let month = months[d.getMonth()];
+    let year = d.getFullYear();
+
+    return `${day} ${date} ${month} ${year}`
+  }
+
+
+  return (
+    <div className="App">
+        <main>
+          <div className="search-box">
+            <input
+              type="text"
+              className="search-bar"
+              placeholder="Search for a location..."
+              onChange={onChange}
+              value={query}
+              onKeyPress={search}
+            />
+          </div>
+          {(typeof weather.main != "undefined") ? (
+            <div>
+                          <div className="location-box">
+              <div className="location">{weather.name}, {weather.sys.country}</div>
+              <div className="date">{dateBuilder(new Date())}</div>
+            </div>
+            <div  className="weather-box">
+              <div className="temperature">
+                {Math.round(weather.main.temp)}°
+              </div>
+              <div className="weather">
+                  {weather.weather[0].main}
+              </div>
+            </div>
+          </div>
+          ) : ('')}
+        </main>
+    </div>
+  );
 }
 
 export default App;

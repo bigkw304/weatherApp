@@ -1,33 +1,27 @@
-import React, { useState } from 'react';
+import React, { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
+import weatherObject  from './customTypes/types'
 
 function App() {
   const apikey = process.env.REACT_APP_WEATHER_API_KEY
   const openWeatherURL = "https://api.openweathermap.org/data/2.5/"
   const [query, setQuery] = useState('');
-  const [weather, setWeather] = useState<weatherObject>({main: {temp: 88}, name: "New York", sys: {country: "US"}, weather: [{main: "sunny"}]});
+  const [weather, setWeather] = useState<weatherObject>({temp: 88, name: "New York", country: "US", weatherDescription: "sunny"});
 
-  interface weatherObject {
-    main: {
-      temp: number;
-    }
-    name: string;
-    sys: {
-      country: string
-    }
-    weather: [{
-      main: string
-    }]
-  }
-  
+
 
   const search = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") {
     fetch(`${openWeatherURL}weather?q=${query}&units=imperial&appid=${apikey}`)
     .then(res => res.json())
     .then(result => {
-      setWeather(result);
+      //pass info to our own custom object
+      const temp = result.main.temp;
+      const name = result.name;
+      const country = result.sys.country;
+      const weatherDescription = result.weather[0].main
+      setWeather({temp, name, country, weatherDescription});
       setQuery('');
       console.log(result)
       });
@@ -64,18 +58,25 @@ function App() {
               onKeyPress={search}
             />
           </div>
-          {(typeof weather.main != "undefined") ? (
+          {(typeof weather.temp === "undefined") ? (
+            <div>
+             <div className="location-box">
+              <div className="location">THAT CITY IS NOT A REAL CITY</div>
+            </div>
+          </div>
+          ) : ('')}
+          {(typeof weather.temp != "undefined") ? (
             <div>
                           <div className="location-box">
-              <div className="location">{weather.name}, {weather.sys.country}</div>
+              <div className="location">{weather.name}, {weather.country}</div>
               <div className="date">{dateBuilder(new Date())}</div>
             </div>
             <div  className="weather-box">
               <div className="temperature">
-                {Math.round(weather.main.temp)}°
+                {Math.round(weather.temp)}°
               </div>
               <div className="weather">
-                  {weather.weather[0].main}
+                  {weather.weatherDescription}
               </div>
             </div>
           </div>
